@@ -91,6 +91,12 @@ def generate_text():
         if not data or 'phrase' not in data:
             return jsonify({'error': 'Missing phrase parameter'}), 400
         
+        phrase = data['phrase'].strip()
+        if not phrase:
+            return jsonify({'error': 'Empty phrase'}), 400
+        
+        use_markov = data.get('use_markov', False)
+        max_words = min(data.get('max_words', 7), 15)  # Cap at 15 for safety
         
         with model_lock:
             if use_markov:
@@ -152,6 +158,15 @@ def generate_text():
     except Exception as e:
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
+@app.route('/api/clear_cache', methods=['POST'])
+def clear_cache():
+    """Clear model cache to free memory"""
+    try:
+        with model_lock:
+            clear_model_cache()
+        return jsonify({'message': 'Cache cleared successfully'})
+    except Exception as e:
+        return jsonify({'error': f'Failed to clear cache: {str(e)}'}), 500
 
 if __name__ == '__main__':
     # Initialize Markov model on startup
@@ -160,4 +175,4 @@ if __name__ == '__main__':
     
     # Run Flask app
     print("Starting web server on http://localhost:5001", file=sys.stderr)
-    app.run(host='0.0.0.0', port=5001, debug=False, threaded=True)
+    app.run(host='0.0.0.0', port=5001, debug=False, threaded=True)s
