@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: "Unit tests (Python ${{ matrix.python-version }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt', 'pyproject.toml', 'poetry.lock', 'pdm.lock', 'uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+
+      - name: Make install script executable (if present)
+        shell: bash
+        run: |
+          set -eo pipefail
+          [ -f ./install_dependencies.sh ] && chmod +x ./install_dependencies.sh || true
+
+      - name: Install deps (script or fallback) and select python
+        shell: bash
+        run: |
+          set -eo pipefail
+          if [ -f ./install_dependencies.sh ]; then
+            ./install_dependencies.sh
+          else
+            python -m pip install -U pip wheel
+            [ -f requirements.txt ] && pip install -r requirements.txt || true
+            [ -f requirements-dev.txt ] && pip install -r requirements-dev.txt || true
+          fi
+
+          if [ -x ".venv/bin/python" ]; then
+            PY_BIN="$(pwd)/.venv/bin/python"
+          elif [ -x "venv/bin/python" ]; then
+            PY_BIN="$(pwd)/venv/bin/python"
+          elif [ -n "${VIRTUAL_ENV:-}" ] && [ -x "${VIRTUAL_ENV}/bin/python" ]; then
+            PY_BIN="${VIRTUAL_ENV}/bin/python"
+          else
+            PY_BIN="$(command -v python)"
+          fi
+          echo "PY_BIN=$PY_BIN" >> "$GITHUB_ENV"
+          echo "PATH=$(dirname "$PY_BIN"):$PATH" >> "$GITHUB_ENV"
+          "$PY_BIN" -m pip install -U pytest pytest-cov
+
+      - name: Run tests (honors pyproject addopts)
+        shell: bash
+        run: |
+          set -eo pipefail
+          "$PY_BIN" -m pytest -q
+
+      - name: Upload coverage XML (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml-${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            .coverage
+          if-no-files-found: ignore
+
+      - name: Upload HTML coverage (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-${{ matrix.python-version }}
+          path: htmlcov
+          if-no-files-found: ignore
+
+  
