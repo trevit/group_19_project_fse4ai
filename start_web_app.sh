@@ -24,3 +24,16 @@ echo "Starting web server at http://localhost:5001"
 echo "Safari will open automatically in a few seconds..."
 
 echo ""
+open_safari() {
+    sleep 3  # Wait for server to start
+
+    open -a Safari http://localhost:5001
+}
+
+# Start the background process to open Safari
+open_safari &
+
+echo "Starting web server at http://localhost:5001"
+echo "Safari will open automatically in a few seconds..."
+
+echo ""
