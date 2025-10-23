@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  phrase-generator:
+    build: .
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Mount corpus files for better performance (optional)
+      - ./war_and_peace.txt:/app/war_and_peace.txt:ro
+      - ./english_corpus.txt:/app/english_corpus.txt:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
