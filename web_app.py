@@ -175,4 +175,4 @@ if __name__ == '__main__':
     
     # Run Flask app
     print("Starting web server on http://localhost:5001", file=sys.stderr)
-    app.run(host='0.0.0.0', port=5001, debug=False, threaded=True)s
+    app.run(host='0.0.0.0', port=5001, debug=False, threaded=True)

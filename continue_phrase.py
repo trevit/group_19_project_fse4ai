@@ -35,7 +35,16 @@ def log_memory_usage(stage=""):
         memory_mb = process.memory_info().rss / 1024 / 1024
         print(f"[{stage}] Memory usage: {memory_mb:.1f} MB", file=sys.stderr)
 
-
+def get_optimal_device():
+    """Determine the best device for M1 Mac: MPS > CPU"""
+    try:
+        import torch
+        if torch.backends.mps.is_available():
+            return torch.device("mps")
+        else:
+            return torch.device("cpu")
+    except ImportError:
+        return "cpu"
 
 def clear_model_cache():
     """Clear model cache to free memory"""
@@ -119,6 +128,16 @@ def generate_with_transformers(start_phrase, max_words=MAX_WORDS, model_name=Non
         
         model, tokenizer, device = load_transformer_model(model_name)
         
+        # Tokenize input
+        inputs = tokenizer.encode(start_phrase, return_tensors="pt")
+        inputs = inputs.to(device)
+        
+        # Calculate max length
+        input_length = inputs.shape[1]
+        max_new_tokens = min(max_words * 2, 50)  # Conservative limit for 8GB RAM
+        
+        log_memory_usage("before_generation")
+        
         # Generate with optimized parameters for English
         with torch.no_grad():  # Disable gradients for inference
             outputs = model.generate(
@@ -144,6 +163,13 @@ def generate_with_transformers(start_phrase, max_words=MAX_WORDS, model_name=Non
             continuation = generated_text[len(start_phrase):].strip()
         else:
             continuation = generated_text.strip()
+        
+        # Limit to max_words
+        words = continuation.split()
+        if len(words) > max_words:
+            continuation = " ".join(words[:max_words])
+        
+        result = start_phrase + (" " + continuation if continuation else "")
         
         # Clean up punctuation spacing
         result = re.sub(r'\s+([.,:;?!])', r'\1', result)
