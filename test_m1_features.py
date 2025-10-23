@@ -15,6 +15,30 @@ def run_test(description, command):
     print(f"Command: {command}")
     print("-" * 60)
     
+    start_time = time.time()
+    try:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=120)
+        elapsed = time.time() - start_time
+        
+        if result.stdout:
+            print("OUTPUT:")
+            print(result.stdout)
+        
+        if result.stderr:
+            print("DETAILS:")
+            print(result.stderr)
+            
+        print(f"Execution time: {elapsed:.2f}s")
+        print(f"Exit code: {result.returncode}")
+        
+        return result.returncode == 0
+        
+    except subprocess.TimeoutExpired:
+        print("❌ Test timed out (120s)")
+        return False
+    except Exception as e:
+        print(f"❌ Test failed with error: {e}")
+        return False
 
 def main():
     print("🚀 M1 Mac Phrase Continuation - Feature Test Suite")
@@ -62,6 +86,14 @@ def main():
     print(f"\n{'='*60}")
     print(f"TEST SUMMARY: {passed}/{total} tests passed")
     print(f"{'='*60}")
+    
+    if passed == total:
+        print("🎉 All tests passed! M1 optimization is working perfectly.")
+    else:
+        print(f"⚠️  {total - passed} test(s) failed. Check the output above.")
+    
+    print("\n📋 Quick Usage Examples:")
+    print("# Basic usage:")
     print('python3 continue_phrase.py "Your phrase here"')
     print("\n# With performance monitoring:")
     print('python3 continue_phrase.py "Your phrase here" --verbose')
