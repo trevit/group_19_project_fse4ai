@@ -25,7 +25,6 @@ A high-performance phrase continuation application specifically optimized for Ap
 
 ### Docker setup
 ```bash
-# Build and start the application
 docker-compose up --build
 ```
 
