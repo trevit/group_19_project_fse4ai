@@ -1,0 +1,167 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phrase-continuation"
+version = "1.0.0"
+description = "A high-performance phrase continuation application optimized for Apple M1 Macs with transformer models and Markov chains"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Stepan Epifantsev"},
+    {name = "Viktor Nekrasov"},
+    {name = "Yakupova Valeria"},
+    {name = "Viktor Shilov"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.30.0",
+    "tokenizers>=0.13.0",
+    "accelerate>=0.20.0",
+    "psutil>=5.9.0",
+    "numpy>=1.24.0",
+    "flask>=2.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "flake8>=5.0.0",
+    "mypy>=1.0.0",
+    "isort>=5.0.0",
+    "bandit>=1.7.0",
+    "safety>=2.0.0",
+    "pre-commit>=3.0.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-benchmark>=4.0.0",
+    "memory-profiler>=0.60.0",
+    "psutil>=5.9.0",
+]
+
+[project.scripts]
+continue-phrase = "continue_phrase:main"
+phrase-web = "web_app:main"
+
+[project.urls]
+Homepage = "https://github.com/your-org/group_19_final_project_fse4ai"
+Repository = "https://github.com/your-org/group_19_final_project_fse4ai"
+Issues = "https://github.com/your-org/group_19_final_project_fse4ai/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["tests*", "venv*", ".git*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.txt", "*.md", "templates/*.html"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--cov=.",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "m1: marks tests as M1 Mac specific",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "torch.*",
+    "transformers.*",
+    "tokenizers.*",
+    "accelerate.*",
+    "psutil.*",
+    "flask.*",
+]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "venv/*",
+    "tests/*",
+    "*/tests/*",
+    "*/test_*.py",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
